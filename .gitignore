@@ -1,0 +1,17 @@
+
+# This file tells git which files it should NOT track or commit.
+
+# Local configurations
+# Contains sensitive API keys and should never be committed.
+firebaseConfig.local.ts
+
+# Standard Node.js
+node_modules/
+npm-debug.log
+*.log
+.env
+.env.local
+
+# Build artifacts
+dist/
+build/
