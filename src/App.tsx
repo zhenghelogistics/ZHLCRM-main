@@ -126,7 +126,7 @@ const App: React.FC = () => {
     };
     const handleMarkWon = (id: string) => updateLead(id, { status: LeadStatus.WON });
     const handleMarkLost = (id: string, reason: string) => updateLead(id, { status: LeadStatus.LOST_REJECTED, notes: reason });
-    const handleDeleteLead = (id: string) => deleteLead(id);
+    const handleDeleteLead = (id: string) => deleteLead(id).catch((err: any) => setToast({ message: `Delete failed: ${err.message}`, type: 'error' }));
     const handleUpdateNotes = (id: string, notes: string) => updateLead(id, { notes });
     const handleUpdateLeadPrice = (id: string, quoted_price: number) => updateLead(id, { quoted_price });
     const handleNudgeSent = (id: string) => updateLead(id, {

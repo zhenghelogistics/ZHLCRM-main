@@ -90,8 +90,15 @@ export function useLeads() {
     };
 
     const deleteLead = async (id: string): Promise<void> => {
-        await leadsService.deleteLead(id);
-        // Real-time subscription will remove it from state
+        // Optimistic update for instant UI feedback
+        setLeads(prev => prev.filter(l => l.id !== id));
+        try {
+            await leadsService.deleteLead(id);
+        } catch (err: any) {
+            // Rollback on failure
+            await fetchLeads();
+            throw err;
+        }
     };
 
     return { leads, isLoading, error, addLead, updateLead, deleteLead };
