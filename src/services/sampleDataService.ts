@@ -1,10 +1,5 @@
-import { getFirestore, collection, getDocs, writeBatch, doc } from "firebase/firestore";
-import { initializeApp } from "firebase/app";
-import { Lead, MonthlyArchive, LeadStatus, RiskLevel } from "../types";
-import { firebaseConfig } from '../firebaseConfig';
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { supabase } from '../lib/supabase';
+import { Lead, MonthlyArchive, LeadStatus, RiskLevel } from '../types';
 
 const now = new Date();
 const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -20,7 +15,7 @@ const dateInPreviousMonth = (day: number, monthsAgo: number) => {
     const d = new Date(today);
     d.setMonth(d.getMonth() - monthsAgo, day);
     return d.toISOString();
-}
+};
 
 const currentMonthLeads: Omit<Lead, 'id'>[] = [
     { customer_name: "Apex Solutions", quoted_price: 12500, industry: "Tech", lead_score: 9, status: LeadStatus.QUOTE_SENT, stage: "T-24h (Nurture)", createdAt: dateInCurrentMonth(today.getDate() - 1, 0), next_follow_up: dateInCurrentMonth(today.getDate(), 1), riskLevel: RiskLevel.LOW, notes: "High potential deal for server rack transport." },
@@ -57,32 +52,20 @@ const juneArchive: MonthlyArchive = {
 
 export const seedDatabaseWithSampleData = async () => {
     try {
-        const leadsCollectionRef = collection(db, "leads");
-        const archivesCollectionRef = collection(db, "archives");
-
-        const [leadsSnapshot, archivesSnapshot] = await Promise.all([
-            getDocs(leadsCollectionRef),
-            getDocs(archivesCollectionRef)
+        const [{ data: leadsData }, { data: archivesData }] = await Promise.all([
+            supabase.from('leads').select('id').limit(1),
+            supabase.from('monthly_archives').select('id').limit(1),
         ]);
-        
-        if (!leadsSnapshot.empty || !archivesSnapshot.empty) {
+
+        if ((leadsData && leadsData.length > 0) || (archivesData && archivesData.length > 0)) {
             return;
         }
 
-        const batch = writeBatch(db);
+        const { error: leadsError } = await supabase.from('leads').insert(currentMonthLeads);
+        if (leadsError) throw leadsError;
 
-        currentMonthLeads.forEach((lead) => {
-            const newLeadRef = doc(leadsCollectionRef);
-            batch.set(newLeadRef, lead);
-        });
-        
-        const archives = [juneArchive, julyArchive];
-        archives.forEach(archive => {
-            const archiveRef = doc(archivesCollectionRef, archive.id);
-            batch.set(archiveRef, archive);
-        });
-
-        await batch.commit();
+        const { error: archivesError } = await supabase.from('monthly_archives').insert([juneArchive, julyArchive]);
+        if (archivesError) throw archivesError;
 
     } catch (error) {
         console.error("Error seeding database:", error);

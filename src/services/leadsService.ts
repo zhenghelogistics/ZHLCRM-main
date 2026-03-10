@@ -1,8 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import { Lead, MonthlyArchive } from '../types';
-import { supabaseUrl, supabaseAnonKey } from '../supabaseConfig';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- Leads ---
 
